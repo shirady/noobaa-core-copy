@@ -648,6 +648,20 @@ function _is_statements_fit(statements, account, method, arn_path) {
     return false;
 }
 
+function check_encoding_type(encoding_type) {
+    if (typeof encoding_type === 'undefined') {
+        return false;
+    } else if (encoding_type.toLowerCase() === 'url') {
+        return true;
+    } else {
+        dbg.warn('Invalid encoding-type', encoding_type);
+        throw new S3Error(S3Error.InvalidEncodingType);
+    }
+}
+
+const SPACE_ENCODED = encodeURIComponent(' ');
+const no_encode = value => value;
+const encode_url_field = value => value && encodeURIComponent(value).replaceAll(SPACE_ENCODED, `+`); //To align with AWS’s reply we changed the encoding of space.
 
 exports.STORAGE_CLASS_STANDARD = STORAGE_CLASS_STANDARD;
 exports.DEFAULT_S3_USER = DEFAULT_S3_USER;
@@ -678,3 +692,6 @@ exports.get_http_response_from_resp = get_http_response_from_resp;
 exports.get_http_response_date = get_http_response_date;
 exports.has_bucket_policy_permission = has_bucket_policy_permission;
 exports.XATTR_SORT_SYMBOL = XATTR_SORT_SYMBOL;
+exports.check_encoding_type = check_encoding_type;
+exports.no_encode = no_encode;
+exports.encode_url_field = encode_url_field;

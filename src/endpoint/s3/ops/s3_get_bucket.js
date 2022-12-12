@@ -6,8 +6,14 @@ const dbg = require('../../../util/debug_module')(__filename);
 const S3Error = require('../s3_errors').S3Error;
 const s3_utils = require('../s3_utils');
 
-/**
+/*
+ * list objects and list objects V2: 
+ * https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjects.html
+ * https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html
+ * 
+ * note: the original documentation was in the below link:
  * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGET.html
+ * (but anyway it is permanently redirected to list object link above)
  */
 async function get_bucket(req) {
 
@@ -35,43 +41,47 @@ async function get_bucket(req) {
     }
     const reply = await req.object_sdk.list_objects(params);
 
+    const encoding_type = req.query['encoding-type'];
+    const encoding_flag = s3_utils.check_encoding_type(encoding_type);
+    const encode_field = encoding_flag ? s3_utils.encode_url_field : s3_utils.no_encode;
+
     return {
         ListBucketResult: [{
-                Name: req.params.bucket,
-                Prefix: req.query.prefix,
-                Delimiter: req.query.delimiter || undefined,
-                MaxKeys: max_keys_received,
-                IsTruncated: reply.is_truncated,
-                'Encoding-Type': req.query['encoding-type'],
-                ...(list_type === '2' ? {
-                    ContinuationToken: cont_tok,
-                    StartAfter: start_after,
-                    KeyCount: reply.objects.length + reply.common_prefixes.length,
-                    NextContinuationToken: key_marker_to_cont_tok(
-                        reply.next_marker, reply.objects, reply.is_truncated),
-                } : { // list_type v1
-                    Marker: req.query.marker || '',
-                    NextMarker: req.query.delimiter ? reply.next_marker : undefined,
-                }),
-            },
-            _.map(reply.objects, obj => ({
-                Contents: {
-                    Key: obj.key,
-                    // if the object specifies last_modified_time we use it, otherwise take create_time.
-                    // last_modified_time is set only for cached objects.
-                    // Non cached objects will use obj.create_time
-                    LastModified: s3_utils.format_s3_xml_date(obj.last_modified_time || obj.create_time),
-                    ETag: `"${obj.etag}"`,
-                    Size: obj.size,
-                    Owner: (!list_type || req.query['fetch-owner']) && s3_utils.DEFAULT_S3_USER,
-                    StorageClass: s3_utils.STORAGE_CLASS_STANDARD,
-                }
-            })),
-            _.map(reply.common_prefixes, prefix => ({
-                CommonPrefixes: {
-                    Prefix: prefix || ''
-                }
-            }))
+            Name: req.params.bucket,
+            Prefix: encode_field(req.query.prefix) || '',
+            Delimiter: encode_field(req.query.delimiter) || undefined,
+            MaxKeys: max_keys_received,
+            IsTruncated: reply.is_truncated,
+            'EncodingType': encoding_type,
+            ...(list_type === '2' ? {
+                ContinuationToken: cont_tok,
+                StartAfter: encode_field(start_after),
+                KeyCount: reply.objects.length + reply.common_prefixes.length,
+                NextContinuationToken: key_marker_to_cont_tok(
+                    reply.next_marker, reply.objects, reply.is_truncated),
+            } : { // list_type v1
+                Marker: req.query.marker || '',
+                NextMarker: req.query.delimiter ? reply.next_marker : undefined,
+            }),
+        },
+        _.map(reply.objects, obj => ({
+            Contents: {
+                Key: encode_field(obj.key),
+                // if the object specifies last_modified_time we use it, otherwise take create_time.
+                // last_modified_time is set only for cached objects.
+                // Non cached objects will use obj.create_time
+                LastModified: s3_utils.format_s3_xml_date(obj.last_modified_time || obj.create_time),
+                ETag: `"${obj.etag}"`,
+                Size: obj.size,
+                Owner: (!list_type || req.query['fetch-owner']) && s3_utils.DEFAULT_S3_USER,
+                StorageClass: s3_utils.STORAGE_CLASS_STANDARD,
+            }
+        })),
+        _.map(reply.common_prefixes, prefix => ({
+            CommonPrefixes: {
+                Prefix: encode_field(prefix) || ''
+            }
+        }))
         ]
     };
 }
