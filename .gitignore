@@ -1,0 +1,31 @@
+# BUILD
+/node_modules/
+/build/
+/coverage/
+/.nyc_output/
+/noobaa.rpm
+
+## TEST
+/metadata_storage*
+/agent_storage*
+/noobaa_storage*
+/agent_conf*.json*
+
+## LOGS
+/logs/
+/npm-debug.log*
+*.log
+
+## IDE
+/.vscode/
+/.idea/
+/*.sublime*
+
+## DEVELOPER
+/config-local.js
+/.env
+/heapdump-*
+*.pem
+.DS_Store
+# custom ignored files - use .IGNORE or any prefix.IGNORE dir/file name to remove from git
+*.IGNORE 

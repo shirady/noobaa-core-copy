@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es2021",
+    "module": "commonjs",
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "checkJs": true,
+    "allowJs": true,
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+  ]
+}

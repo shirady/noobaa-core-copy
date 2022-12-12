@@ -1,0 +1,302 @@
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: noobaa-account
+  labels:
+    app: noobaa
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  creationTimestamp: null
+  name: noobaa-role
+  labels:
+    app: noobaa
+rules:
+  - apiGroups:
+      - apps
+    resources:
+      - statefulsets
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - "" # "" indicates the core API group
+    resources:
+      - services
+      - pods
+      - persistentvolumeclaims
+    verbs:
+      - get
+      - list
+      - watch
+      - patch
+      - delete
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: noobaa-role-binding
+  labels:
+    app: noobaa
+subjects:
+  - kind: ServiceAccount
+    name: noobaa-account
+roleRef:
+  kind: Role
+  name: noobaa-role
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: s3
+  labels:
+    app: noobaa
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 6001
+      name: s3
+    - port: 443
+      targetPort: 6443
+      name: s3-https
+  selector:
+    noobaa-s3: "true"
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: noobaa-mgmt
+  labels:
+    app: noobaa
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/scheme: http
+    prometheus.io/port: "8080"
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8080
+      name: mgmt
+    - port: 8443
+      name: mgmt-https
+    - port: 8444
+      name: md-https
+    - port: 8445
+      name: bg-https
+    - port: 8446
+      name: hosted-agents-https
+  selector:
+    noobaa-mgmt: "true"
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: noobaa-server
+  labels:
+    app: noobaa
+    noobaa-module: noobaa-server
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      noobaa-module: noobaa-server
+  serviceName: noobaa-mgmt
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: noobaa
+        noobaa-module: noobaa-server
+        noobaa-s3: "true"
+        noobaa-mgmt: "true"
+    spec:
+      containers:
+        - name: noobaa-server
+          image: noobaa/noobaa-core:5.0.1
+          imagePullPolicy: IfNotPresent
+          resources:
+            # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+          ports:
+            - containerPort: 8080
+            - containerPort: 8443
+            - containerPort: 8444
+            - containerPort: 8445
+            - containerPort: 8446
+            - containerPort: 60100
+          volumeMounts:
+            - mountPath: /log
+              name: logdir
+          env:
+            - name: CONTAINER_PLATFORM
+              value: KUBERNETES
+            - name: ENDPOINT_FORKS_NUMBER
+              valueFrom:
+                configMapKeyRef:
+                  name: noobaa-config-map
+                  key: endpoint_number_of_forks
+                  optional: true
+            - name: DISABLE_DEV_RANDOM_SEED
+              valueFrom:
+                configMapKeyRef:
+                  name: noobaa-config-map
+                  key: disable_dev_random
+                  optional: true
+            - name: CREATE_SYS_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: noobaa-create-sys-creds
+                  key: name
+                  optional: true
+            - name: CREATE_SYS_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: noobaa-create-sys-creds
+                  key: email
+                  optional: true
+            - name: CREATE_SYS_PASSWD
+              valueFrom:
+                secretKeyRef:
+                  name: noobaa-create-sys-creds
+                  key: password
+                  optional: true
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: noobaa-secrets
+                  key: jwt
+            - name: SERVER_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: noobaa-secrets
+                  key: server_secret
+            - name: NOOBAA_ROOT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: noobaa-secrets
+                  key: noobaa_root_secret
+            - name: AGENT_PROFILE
+              valueFrom:
+                configMapKeyRef:
+                  name: noobaa-config-map
+                  key: noobaa_agent_profile
+                  optional: true
+            - name: OAUTH_AUTHORIZATION_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: noobaa-config-map
+                  key: oauth_authorization_endpoint
+                  optional: true
+            - name: OAUTH_TOKEN_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: noobaa-config-map
+                  key: oauth_token_endpoint
+                  optional: true
+            # replacing the empty value with any value will set the container to dbg mode
+            - name: container_dbg
+              value: ""
+        - name: mongodb
+          image: centos/mongodb-36-centos7
+          imagePullPolicy: IfNotPresent
+          command:
+            [
+              "/bin/bash",
+              "-c",
+              "/opt/rh/rh-mongodb36/root/usr/bin/mongod --port 27017 --bind_ip localhost --dbpath /data/mongo/cluster/shard1",
+            ]
+          resources:
+            # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "8Gi"
+          volumeMounts:
+            - mountPath: /data
+              name: mongo-datadir
+        - name: endpoint
+          image: NOOBAA_CORE_IMAGE
+          imagePullPolicy: IfNotPresent
+          command:
+            - /noobaa_init_files/noobaa_init.sh
+            - init_endpoint
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "100Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          ports:
+            - containerPort: 6001
+            - containerPort: 6443
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: noobaa-secrets
+                  key: jwt
+            - name: NOOBAA_ROOT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: noobaa-secrets
+                  key: noobaa_root_secret
+            - name: LOCAL_MD_SERVER
+              value: "true"
+          # - name: MGMT_URL
+          # - name: MONGODB_URL
+          # - name: VIRTUAL_HOSTS
+          # - name: REGION
+          # readinessProbe: # must be configured to support rolling updates
+          #   tcpSocket:
+          #     port: 6001 # ready when s3 port is open
+          #   timeoutSeconds: 5
+      initContainers:
+        - name: init-mongo
+          image: noobaa/noobaa-core:5.0.1
+          imagePullPolicy: IfNotPresent
+          # command: ['/noobaa_init_files/kube_pv_chown', 'server']
+          command: ["/noobaa_init_files/noobaa_init.sh", "init_mongo"]
+          volumeMounts:
+            - mountPath: /mongo_data
+              name: mongo-datadir
+      serviceAccountName: noobaa-account
+  volumeClaimTemplates:
+    # this will provision a dynamic persistent volume (volume is automatically provisioned by a provisioner)
+    # in minikube it is provisioned as hostPath volume under hosts /tmp which is not persistent between
+    # minikube restarts. if we want it to be persistent between restarts we need to statically provision a
+    # volume according to this https://kubernetes.io/docs/setup/minikube/#persistent-volumes
+    - metadata:
+        name: logdir
+        labels:
+          app: noobaa
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+    - metadata:
+        name: mongo-datadir
+        labels:
+          app: noobaa
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 50Gi

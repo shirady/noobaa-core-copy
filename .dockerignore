@@ -1,0 +1,13 @@
+.git/
+node_modules/
+build/
+coverage/
+logs/
+*.log
+metadata_storage/
+noobaa_storage/
+heapdump-*
+.vscode/
+*.STASH
+.nyc_output/
+*Dockerfile
