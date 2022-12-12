@@ -76,9 +76,9 @@ let stats = {
 
 let tests_list;
 
-const s3_tests_black_list_url = 'src/test/system_tests/s3-tests/s3_tests_black_list.txt';
+const s3_tests_black_list_url = 'src/test/system_tests/s3-tests-lists/s3_tests_black_list.txt';
 const S3_CEPH_TEST_BLACKLIST = fs.readFileSync(s3_tests_black_list_url).toString().trim().split("\n");
-const s3_tests_pending_list_url = 'src/test/system_tests/s3-tests/s3_tests_pending_list.txt';
+const s3_tests_pending_list_url = 'src/test/system_tests/s3-tests-lists/s3_tests_pending_list.txt';
 const S3_CEPH_TEST_PENDING_LIST = fs.readFileSync(s3_tests_pending_list_url).toString().trim().split("\n");
 const S3_CEPH_TEST_OUT_OF_SCOPE = S3_CEPH_TEST_BLACKLIST.concat(S3_CEPH_TEST_PENDING_LIST);
 //Regexp match will be tested per each entry
