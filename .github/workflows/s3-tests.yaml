@@ -23,4 +23,4 @@ jobs:
       - name: run all tests
         run: |
          cd ./src/test/framework/
-         ./run_test_job.sh --name ${{ github.actor }} --image noobaa-core:s3-tests --tester_image noobaa-tester:s3-tests --tests_list ./system_tests_list.js --job_yaml ../../../.travis/travis_test_job.yaml --wait
+         sudo ./run_test_job.sh --name ${{ github.actor }} --image noobaa-core:s3-tests --tester_image noobaa-tester:s3-tests --tests_list ./system_tests_list.js --job_yaml ../../../.travis/travis_test_job.yaml --wait
