@@ -1,8 +1,6 @@
 name: Build ppc64le image
 # on: [push, pull_request]
-on: 
-  schedule:
-    - cron: "0 23 * * *"
+on: workflow_dispatch
     
 jobs:
   build-ppc64le-image:
