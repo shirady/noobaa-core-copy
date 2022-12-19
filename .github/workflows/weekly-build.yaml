@@ -1,9 +1,7 @@
 name: Weekly Build
 
 # Run every day at 23:00 UTC
-on: 
-  schedule:
-    - cron: "0 23 * * *"
+on: workflow_dispatch
 
 jobs:
   publish-image:
