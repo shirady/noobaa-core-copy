@@ -2,7 +2,7 @@ name: S3 Tests
 run-name: ${{ github.actor }} is testing S3 Tests 🚀
 
 # Run on each new PR and each new push to existing PR
-on: [push, pull_request]
+on: workflow_dispatch
 
 jobs:
   run-s3-tests:
