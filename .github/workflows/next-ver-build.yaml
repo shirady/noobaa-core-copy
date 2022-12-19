@@ -2,8 +2,6 @@ name: Next Version Build
 
 # Run the Weekly on Monday 8 AM UTC
 on: 
-  schedule:
-    - cron: "0 12 * * 1"
   workflow_dispatch:
     inputs:
       branch:
