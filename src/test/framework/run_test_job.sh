@@ -95,7 +95,7 @@ pod=$(kubectl get pods -n ${NAMESPACE} | tail -1 | awk '{print $1}' | cut -f 2 -
 server_namespace=$(kubectl get ns -o name | grep namespace/$NAMESPACE_PREFIX | cut -d/ -f2-)
 
 if [ ${WAIT_COMPLETION} ]; then
-    kubectl wait --for=condition=complete job/${TEST_RUN_NAME} --timeout=500s -n ${NAMESPACE}
+    kubectl wait --for=condition=complete job/${TEST_RUN_NAME} --timeout=800s -n ${NAMESPACE}
     test_exit_code=$?
     #Display logs of run
 
