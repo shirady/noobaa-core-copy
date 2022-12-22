@@ -18,17 +18,17 @@ require('../../util/dotenv').load();
 
 const {
     pass = 'DeMo1',
-        protocol = 'ws',
-        mgmt_ip = 'localhost',
-        mgmt_port = '8080',
-        s3_ip = 'localhost',
-        s3_acc_key = 123,
-        s3_sec_key = 'abc',
+    protocol = 'ws',
+    mgmt_ip = 'localhost',
+    mgmt_port = '8080',
+    s3_ip = 'localhost',
+    s3_acc_key = 123,
+    s3_sec_key = 'abc',
 } = argv;
 
 let {
     email = 'demo@noobaa.com',
-        system_name = 'demo',
+    system_name = 'demo',
 } = argv;
 
 const api = require('../../api');
@@ -558,7 +558,7 @@ async function run_single_test(test) {
 }
 
 async function test_worker() {
-    for (;;) {
+    for (; ;) {
         const t = tests_list.shift();
         if (!t) return;
         await run_single_test(t);
@@ -595,6 +595,7 @@ async function main() {
 }
 
 async function run_test() {
+    /*
     try {
         await client.create_auth_token(auth_params);
     } catch (err) {
@@ -608,7 +609,7 @@ async function run_test() {
         console.error('Failed setup ceph tests', err);
         throw new Error('Failed setup ceph tests');
     }
-
+*/
     try {
         await run_all_tests();
     } catch (err) {
