@@ -447,7 +447,11 @@ S3Error.NoSuchTagSet = Object.freeze({
     message: 'The tag provided is not found.',
     http_code: 404,
 });
-
+S3Error.InvalidEncodingType = Object.freeze({
+    code: 'InvalidArgument',
+    message: 'Invalid Encoding Method specified in Request',
+    http_code: 400,
+});
 
 
 /////////////////////////////////////
