@@ -1,9 +1,6 @@
 name: check-number-of-commits2
 
-on:
-  pull_request:
-    branches:
-      - main
+on: pull_request
 
 jobs:
   check-number-of-commits2:
