@@ -1,0 +1,12 @@
+name: check-number-of-commits3
+on: [workflow_dispatch, pull_request ]
+
+jobs:
+  check-number-of-commits3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name:  Block Merge
+        run: |
+         echo ::set-output name=message::"Please squash your commits before merging."
