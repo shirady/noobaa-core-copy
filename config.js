@@ -26,7 +26,7 @@ const assert = require('assert');
 // -  The heap will be able to burst up and down.
 //
 // When to use REQUEST:
-// - Less common and is currently unused
+// - Less common and is currently unused.
 // - Might be needed when limiting pinned memory like DB caches.
 
 config.CONTAINER_MEM_LIMIT = Number(process.env.CONTAINER_MEM_LIMIT || '') || os.totalmem();
