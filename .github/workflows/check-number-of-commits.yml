@@ -1,0 +1,17 @@
+name: check-number-of-commits
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: check-number-of-commits
+      run: |
+        COMMIT_COUNT=$(git rev-list --count HEAD^..HEAD)
+        if [ $COMMIT_COUNT -gt 1 ]; then
+          echo "PR has more than one commit."
+          echo "Please squash your commits before merging."
+          exit 1
+        fi
