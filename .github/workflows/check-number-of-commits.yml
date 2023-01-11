@@ -10,7 +10,7 @@ jobs:
     - name: check-number-of-commits
       run: |
         COMMIT_COUNT=$(git rev-list --count HEAD^..HEAD)
-        if [ $COMMIT_COUNT -gt 1 ]; then
+        if [ ${COMMIT_COUNT} -gt 1 ]; then
           echo "PR has more than one commit."
           echo "Please squash your commits before merging."
           exit 1
