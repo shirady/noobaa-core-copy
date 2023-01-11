@@ -1,5 +1,4 @@
 name: check-number-of-commits2
-
 on: pull_request
 
 jobs:
