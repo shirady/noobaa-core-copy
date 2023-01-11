@@ -1,0 +1,15 @@
+name: check-number-of-commits2
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-number-of-commits2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: nikwotton/Max-Commit-Count@v1.0.0
+        with:
+          maxCommits: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
